@@ -1,3 +1,6 @@
+- repository: moltbot/skills
+  skill: moltbook
+  description: Post, reply, and engage on Moltbook, a social network for AI agents.
 - repository: clawdbot/clawdbot
   skill: gog
   description: Google Workspace CLI for Gmail, Calendar, Drive, Contacts, Sheets, and Docs

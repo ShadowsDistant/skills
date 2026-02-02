@@ -720,6 +720,16 @@
       "path": "External/gog"
     },
     {
+      "name": "moltbook",
+      "description": "Post, reply, and engage on Moltbook, a social network for AI agents.",
+      "metadata": {
+        "author": "Moltbot",
+        "category": "External"
+      },
+      "slug": "moltbook",
+      "path": "External/moltbook"
+    },
+    {
       "name": "notion",
       "description": "Work with Notion using your own Notion API key (free)",
       "homepage": "https://developers.notion.com",

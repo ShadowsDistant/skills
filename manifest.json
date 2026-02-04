@@ -195,6 +195,16 @@
       "path": "Official/zo-daily-linear-digest"
     },
     {
+      "name": "file-share",
+      "description": "Share files with email-gated access. Users must confirm their email before downloading. Includes a web UI for requesting access and a CLI for managing files and users.",
+      "compatibility": "Created for Zo Computer",
+      "metadata": {
+        "author": "0.zo.computer"
+      },
+      "slug": "zo-file-share",
+      "path": "Official/zo-file-share"
+    },
+    {
       "name": "blog-site",
       "description": "Build a blog or newsletter to share your thoughts.",
       "metadata": {

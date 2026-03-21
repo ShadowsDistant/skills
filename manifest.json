@@ -994,6 +994,17 @@
       "path": "Community/market-research"
     },
     {
+      "name": "exe-dev",
+      "description": "Manage exe.dev VMs - create, list, delete, restart, rename, copy VMs and manage sharing/access. Use when the user wants to spin up new VMs, manage existing ones, or configure HTTP proxy sharing on exe.dev.",
+      "compatibility": "Created for Zo Computer",
+      "metadata": {
+        "author": "davidj.zo.computer",
+        "category": "Community"
+      },
+      "slug": "exe-dev",
+      "path": "Community/exe-dev"
+    },
+    {
       "name": "morning-briefing",
       "description": "Generate and deliver a daily morning briefing. Run via scheduled agent at your preferred morning time, or manually when the user asks for a briefing. Pulls tasks, calendar, inbox highlights, and news into a single digest delivered by email and SMS.\n",
       "compatibility": "Created for Zo Computer",

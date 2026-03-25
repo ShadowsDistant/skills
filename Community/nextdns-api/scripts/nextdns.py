@@ -2,11 +2,9 @@
 """NextDNS API CLI tool - Full feature set for querying logs, analytics, and managing profiles."""
 
 import os
-import sys
 import argparse
 import json
 import requests
-from datetime import datetime, timezone
 
 API_KEY = os.environ.get("NEXTDNS_API_KEY")
 BASE_URL = "https://api.nextdns.io"
@@ -340,19 +338,21 @@ def cmd_logs_stream(args):
 def cmd_logs_download(args):
     """Download logs as a file."""
     profile_id = get_profile_id(args.profile)
-    
+
     url = f"{BASE_URL}/profiles/{profile_id}/logs/download"
-    if not args.no_redirect:
+    if args.no_redirect:
+        # Return the redirecting URL directly for the caller to follow
+        download_url = url
+    else:
+        # Request JSON response with redirect=0 to get download URL
         params = {"redirect": "0"}
         resp = requests.get(url, headers=get_headers(), params=params)
         resp.raise_for_status()
         data = resp.json()
         download_url = data.get("url")
-    else:
-        download_url = url
-    
+
     print(f"Download URL: {download_url}")
-    
+
     if args.output:
         print(f"Downloading to {args.output}...")
         resp = requests.get(download_url)

@@ -8,8 +8,8 @@ import argparse
 import json
 import os
 import sys
-import time
 import re
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
@@ -33,51 +33,68 @@ HEADERS = {
 def api_url(path: str) -> str:
     return f"{API_BASE}{path}"
 
+def build_qs(params: dict | None) -> str:
+    """Build URL-encoded query string with proper array support."""
+    if not params:
+        return ""
+    return urlencode(sorted(params.items()), doseq=True)
+
 def get(path: str, params: dict | None = None) -> list | dict:
     url = api_url(path)
-    if params:
-        qs = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
-        if qs:
-            url = f"{url}?{qs}"
+    qs = build_qs(params)
+    if qs:
+        url = f"{url}?{qs}"
     req = Request(url, headers=HEADERS)
     try:
-        resp = urlopen(req)
+        resp = urlopen(req, timeout=10)
         return json.loads(resp.read())
     except HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"HTTP {e.code} on GET {url}\n{body}", file=sys.stderr)
+        sys.exit(1)
+    except URLError as e:
+        print(f"Network error on GET {url}: {e}", file=sys.stderr)
         sys.exit(1)
 
 def post(path: str, data: dict | None = None) -> dict:
     body = json.dumps(data or {}).encode() if data else None
     req = Request(api_url(path), data=body, headers=HEADERS, method="POST")
     try:
-        resp = urlopen(req)
+        resp = urlopen(req, timeout=10)
         return json.loads(resp.read())
     except HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"HTTP {e.code} on POST {path}\n{body}", file=sys.stderr)
+        sys.exit(1)
+    except URLError as e:
+        print(f"Network error on POST {path}: {e}", file=sys.stderr)
         sys.exit(1)
 
 def put(path: str, data: dict | None = None) -> dict:
     body = json.dumps(data or {}).encode() if data else None
     req = Request(api_url(path), data=body, headers=HEADERS, method="PUT")
     try:
-        resp = urlopen(req)
+        resp = urlopen(req, timeout=10)
         return json.loads(resp.read())
     except HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"HTTP {e.code} on PUT {path}\n{body}", file=sys.stderr)
         sys.exit(1)
+    except URLError as e:
+        print(f"Network error on PUT {path}: {e}", file=sys.stderr)
+        sys.exit(1)
 
 def delete(path: str) -> dict | None:
     req = Request(api_url(path), headers=HEADERS, method="DELETE")
     try:
-        resp = urlopen(req)
+        resp = urlopen(req, timeout=10)
         return json.loads(resp.read()) if resp.status != 204 else None
     except HTTPError as e:
         body = e.read().decode(errors="replace")
         print(f"HTTP {e.code} on DELETE {path}\n{body}", file=sys.stderr)
+        sys.exit(1)
+    except URLError as e:
+        print(f"Network error on DELETE {path}: {e}", file=sys.stderr)
         sys.exit(1)
 
 def paginate(path: str, params: dict | None = None) -> list:
@@ -87,11 +104,11 @@ def paginate(path: str, params: dict | None = None) -> list:
     all_items = []
     url = api_url(path)
     while True:
-        qs = "&".join(f"{k}={v}" for k, v in params.items() if v is not None)
+        qs = build_qs(params)
         req_url = f"{url}?{qs}" if qs else url
         req = Request(req_url, headers=HEADERS)
         try:
-            resp = urlopen(req)
+            resp = urlopen(req, timeout=10)
             items = json.loads(resp.read())
             all_items.extend(items)
             # Check Link header for next page
@@ -99,11 +116,16 @@ def paginate(path: str, params: dict | None = None) -> list:
             next_match = re.search(r'<([^>]+)>;\s*rel="next"', link)
             if not next_match:
                 break
+            # Use the URL from Link header directly — it already contains all params
             url = next_match.group(1)
-            # Strip per_page from next URL to let it be inherited
+            # Clear params so we don't re-append them (URL already has everything)
+            params = {}
         except HTTPError as e:
             body = e.read().decode(errors="replace")
             print(f"HTTP {e.code} on GET {req_url}\n{body}", file=sys.stderr)
+            sys.exit(1)
+        except URLError as e:
+            print(f"Network error on GET {req_url}: {e}", file=sys.stderr)
             sys.exit(1)
     return all_items
 
@@ -136,7 +158,7 @@ def cmd_submissions(args):
     if args.student_id and args.assignment_id:
         r = get(f"/courses/{args.course_id}/students/{args.student_id}/submissions/{args.assignment_id}")
     elif args.student_id:
-        r = get(f"/courses/{args.course_id}/students/{args.student_id}/submissions", {"assignment_ids": args.assignment_id, " graded": args.graded})
+        r = get(f"/courses/{args.course_id}/students/{args.student_id}/submissions", {"assignment_ids": args.assignment_id, "graded": args.graded})
     else:
         r = paginate(f"/courses/{args.course_id}/students/submissions", {"assignment_ids": args.assignment_ids or None, "graded": args.graded})
     print(json.dumps(r, indent=2))
